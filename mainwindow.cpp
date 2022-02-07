@@ -105,12 +105,12 @@ void MainWindow::on_pushButton_2_clicked() {
     QModelIndex curIndex = tabModel->index(tabModel->rowCount() - 1, 1);   //创建最后一行的ModelIndex
     theSelection->clearSelection();                                        //清空选择项
     theSelection->setCurrentIndex(curIndex, QItemSelectionModel::Select);  //设置刚插入的行为当前选择行
-    int currow = curIndex.row();                                           //获得当前行
-    tabModel->setData(tabModel->index(currow, 0), tabModel->rowCount());   //自动生成编号
-    tabModel->setData(tabModel->index(currow, 1), "默认项目名称");
-    tabModel->setData(tabModel->index(currow, 2), "0000-0000");
+//    int currow = curIndex.row();                                           //获得当前行
+//    tabModel->setData(tabModel->index(currow, 0), tabModel->rowCount());   //自动生成编号
+//    tabModel->setData(tabModel->index(currow, 1), "默认项目名称");
+//    tabModel->setData(tabModel->index(currow, 2), "0000-0000");
 
-    if (!tabModel->submitAll()) {
-        QMessageBox::information(this, "消息", "数据保存错误,错误信息\n" + tabModel->lastError().text(), QMessageBox::Ok, QMessageBox::NoButton);
-    }
+//    if (!tabModel->submitAll()) {
+//        QMessageBox::information(this, "消息", "数据保存错误");
+//    }
 }
