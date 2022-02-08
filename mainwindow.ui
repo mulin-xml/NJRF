@@ -16,14 +16,34 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QTableView" name="tableView"/>
+     <widget class="QTableView" name="tableView">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>GroupBox</string>
+       <string>操作栏</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>只读（不可编辑）</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QPushButton" name="pushButton">
          <property name="text">
@@ -33,6 +53,13 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_2">
+         <property name="text">
+          <string>增</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_3">
          <property name="text">
           <string>PushButton</string>
          </property>
@@ -49,7 +76,7 @@
      <x>0</x>
      <y>0</y>
      <width>843</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

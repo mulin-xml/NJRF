@@ -22,9 +22,12 @@ class MainWindow : public QMainWindow {
 
     void on_pushButton_2_clicked();
 
+    void on_pushButton_3_clicked();
+
 private:
     Ui::MainWindow *ui;
     void openTable();
+    void setTblEditable(bool isEditable);
     QSqlDatabase db_;
     QSqlTableModel *tabModel;
     QItemSelectionModel *theSelection;
