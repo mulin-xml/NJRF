@@ -19,19 +19,17 @@ class MainWindow : public QMainWindow {
 
    private slots:
     void on_pushButton_clicked();
-
     void on_pushButton_2_clicked();
-
     void on_pushButton_3_clicked();
 
-private:
+   private:
     Ui::MainWindow *ui;
-    void openTable();
+    void systemInit();
     void setTblEditable(bool isEditable);
+    void checkAdminPassword();
     QSqlDatabase db_;
     QSqlTableModel *tabModel;
     QItemSelectionModel *theSelection;
     QWidgetMapper *dataMapper;
-
 };
 #endif  // MAINWINDOW_H

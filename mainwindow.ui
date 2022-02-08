@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>人防项目防护设备抽查</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -20,13 +20,31 @@
       <property name="enabled">
        <bool>true</bool>
       </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="groupBox">
+      <property name="minimumSize">
+       <size>
+        <width>150</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>150</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="title">
        <string>操作栏</string>
       </property>
@@ -61,7 +79,7 @@
        <item>
         <widget class="QPushButton" name="pushButton_3">
          <property name="text">
-          <string>PushButton</string>
+          <string>申请编辑</string>
          </property>
         </widget>
        </item>
@@ -76,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>843</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

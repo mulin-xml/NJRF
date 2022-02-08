@@ -3,7 +3,7 @@ QT       += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++14
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -17,13 +17,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    getadminpassword.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    getadminpassword.h \
     mainwindow.h
 
 FORMS += \
+    getadminpassword.ui \
     mainwindow.ui
 
 # Default rules for deployment.

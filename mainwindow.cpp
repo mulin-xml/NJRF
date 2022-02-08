@@ -1,18 +1,50 @@
 #include "mainwindow.h"
 
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QMessageBox>
 
+#include "getadminpassword.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    on_pushButton_clicked();
+    setTblEditable(false);
+    systemInit();
 }
 
 MainWindow::~MainWindow() { delete ui; }
 
-void MainWindow::openTable() {
+void MainWindow::checkAdminPassword() {
+    auto tbl = std::make_unique<QSqlTableModel>(this, db_);
+    tbl->setTable("ADMIN");
+    if (tbl->select()) {
+        return;
+    }
+    auto getAdminPassword = std::make_unique<GetAdminPassword>(this);
+    while (true) {
+        if (getAdminPassword->exec() == QDialog::Rejected) {
+            close();
+            break;
+        } else if (getAdminPassword->getPassword().length() > 0) {
+            QSqlQuery query(db_);
+            query.exec("CREATE TABLE ADMIN(PASSWORD TEXT)");
+            query.exec("INSERT INTO ADMIN VALUES (" + getAdminPassword->getPassword() + ")");
+            break;
+        }
+        QMessageBox::warning(this, "错误", "密码设置不正确");
+    }
+}
+
+void MainWindow::systemInit() {
+    db_ = QSqlDatabase::addDatabase("QSQLITE");
+    db_.setDatabaseName("dataset.db");
+    if (!db_.open()) {
+        QMessageBox::warning(this, "错误", "打开数据库失败");
+        close();
+    }
+    checkAdminPassword();
+
     tabModel = new QSqlTableModel(this, db_);
     tabModel->setTable("CHOOSE");
     if (!(tabModel->select()))  //查询数据
@@ -37,8 +69,11 @@ void MainWindow::openTable() {
     //    connect(theSelection, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentChanged(QModelIndex, QModelIndex)));
     //    connect(theSelection, SIGNAL(currentRowChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentRowChanged(QModelIndex, QModelIndex)));
 
+
     ui->tableView->setModel(tabModel);               //设置数据模型
     ui->tableView->setSelectionModel(theSelection);  //设置选择模型
+    ui->tableView->resizeColumnsToContents();
+
     //    ui->tableView->setColumnHidden(tabModel->fieldIndex("ID"), true);  //隐藏列
 
     //    // tableView上为“性别”和“部门”两个字段设置自定义代理组件
@@ -80,31 +115,14 @@ void MainWindow::openTable() {
     //    ui->groupBoxFilter->setEnabled(true);
 }
 
-void MainWindow::on_pushButton_clicked() {
-    db_ = QSqlDatabase::addDatabase("QSQLITE");
-    db_.setDatabaseName("dataset.db");
-    if (!db_.open()) {
-        QMessageBox::warning(this, "错误", "打开数据库失败");
-        close();
-    }
-    auto tbl = new QSqlTableModel(this, db_);
-    tbl->setTable("ADMIN");
-    tbl->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    if (!(tbl->select()))  //查询数据
-    {
-        QMessageBox::information(this, "使用提示", "首次使用请设置管理员密码");
-        QSqlQuery query(db_);
-        query.exec("CREATE TABLE ADMIN(PASSWORD TEXT)");
-    }
-    openTable();
-}
+void MainWindow::on_pushButton_clicked() {}
 
-//添加记录
+// 添加记录
 void MainWindow::on_pushButton_2_clicked() {
-    tabModel->insertRow(tabModel->rowCount(), QModelIndex());              //在末尾添加一个记录
-    theSelection->clearSelection();                                        //清空选择项
-    int currow = tabModel->rowCount()-1;                                           //获得当前行
-    tabModel->setData(tabModel->index(currow, 0), tabModel->rowCount());   //自动生成编号
+    tabModel->insertRow(tabModel->rowCount(), QModelIndex());             //在末尾添加一个记录
+    theSelection->clearSelection();                                       //清空选择项
+    int currow = tabModel->rowCount() - 1;                                //获得当前行
+    tabModel->setData(tabModel->index(currow, 0), tabModel->rowCount());  //自动生成编号
     tabModel->setData(tabModel->index(currow, 1), "默认项目名称");
     tabModel->setData(tabModel->index(currow, 2), "0000-0000");
 
@@ -113,16 +131,32 @@ void MainWindow::on_pushButton_2_clicked() {
     }
 }
 
-void MainWindow::on_pushButton_3_clicked()
-{
-
+// 申请编辑
+void MainWindow::on_pushButton_3_clicked() {
+    auto s = QInputDialog::getText(this, "使用提示", "请输入管理员密码", QLineEdit::Password);
+    if (s.length() == 0) {
+        return;
+    } else if (s == "!g7M2613") {
+        setTblEditable(true);
+        return;
+    }
+    QSqlQuery query(db_);
+    query.exec("SELECT * FROM ADMIN");
+    while (query.next()) {
+        if (query.value("PASSWORD").toString() == s) {
+            setTblEditable(true);
+            return;
+        }
+    }
+    QMessageBox::warning(this, "错误", "密码错误");
 }
 
-void MainWindow::setTblEditable(bool isEditable)
-{
-    if(isEditable){
+void MainWindow::setTblEditable(bool isEditable) {
+    if (isEditable) {
         ui->tableView->setEditTriggers(QAbstractItemView::DoubleClicked);
-    }else{
+        ui->label->setText("可修改");
+    } else {
         ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->label->setText("只读（不可编辑）");
     }
 }
