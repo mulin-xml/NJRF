@@ -4,6 +4,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
+#include "addrecord.h"
 #include "getadminpassword.h"
 #include "ui_mainwindow.h"
 
@@ -26,13 +27,23 @@ void MainWindow::checkAdminPassword() {
         if (getAdminPassword->exec() == QDialog::Rejected) {
             close();
             break;
-        } else if (getAdminPassword->getPassword().length() > 0) {
+        } else if (!getAdminPassword->getPassword().isEmpty()) {
             QSqlQuery query(db_);
             query.exec("CREATE TABLE ADMIN(PASSWORD TEXT)");
-            query.exec("INSERT INTO ADMIN VALUES (" + getAdminPassword->getPassword() + ")");
+            query.exec("INSERT INTO ADMIN VALUES ('" + getAdminPassword->getPassword() + "')");
             break;
         }
         QMessageBox::warning(this, "错误", "密码设置不正确");
+    }
+}
+
+void MainWindow::setTblEditable(bool isEditable) {
+    if (isEditable) {
+        ui->tableView->setEditTriggers(QAbstractItemView::DoubleClicked);
+        ui->label->setText("可修改");
+    } else {
+        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->label->setText("只读（不可编辑）");
     }
 }
 
@@ -51,7 +62,7 @@ void MainWindow::systemInit() {
     {
         QMessageBox::information(this, "使用提示", "未查询到已有数据表，即将创建新数据表");
         QSqlQuery query(db_);
-        query.exec("CREATE TABLE CHOOSE(ID INT PRIMARY KEY NOT NULL, NAME TEXT NOT NULL, RID TEXT NOT NULL, MLFHSB TEXT, ZSTFFHSB TEXT)");
+        query.exec("CREATE TABLE CHOOSE(ID INT PRIMARY KEY NOT NULL, NAME TEXT NOT NULL, RID TEXT UNIQUE NOT NULL, MLFHSB TEXT, ZSTFFHSB TEXT)");
         tabModel->setTable("CHOOSE");
     }
 
@@ -69,10 +80,9 @@ void MainWindow::systemInit() {
     //    connect(theSelection, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentChanged(QModelIndex, QModelIndex)));
     //    connect(theSelection, SIGNAL(currentRowChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentRowChanged(QModelIndex, QModelIndex)));
 
-
-    ui->tableView->setModel(tabModel);               //设置数据模型
-    ui->tableView->setSelectionModel(theSelection);  //设置选择模型
-    ui->tableView->resizeColumnsToContents();
+    ui->tableView->setModel(tabModel);               // 设置数据模型
+    ui->tableView->setSelectionModel(theSelection);  // 设置选择模型
+    ui->tableView->resizeColumnsToContents();        // 自动调整列宽
 
     //    ui->tableView->setColumnHidden(tabModel->fieldIndex("ID"), true);  //隐藏列
 
@@ -115,48 +125,80 @@ void MainWindow::systemInit() {
     //    ui->groupBoxFilter->setEnabled(true);
 }
 
-void MainWindow::on_pushButton_clicked() {}
+// 保存修改
+void MainWindow::on_pushButton_clicked() {
+    if (!tabModel->submitAll()) {
+        QMessageBox::warning(this, "错误", "保存失败，请检查数据格式");
+    }
+}
 
 // 添加记录
 void MainWindow::on_pushButton_2_clicked() {
-    tabModel->insertRow(tabModel->rowCount(), QModelIndex());             //在末尾添加一个记录
-    theSelection->clearSelection();                                       //清空选择项
-    int currow = tabModel->rowCount() - 1;                                //获得当前行
-    tabModel->setData(tabModel->index(currow, 0), tabModel->rowCount());  //自动生成编号
-    tabModel->setData(tabModel->index(currow, 1), "默认项目名称");
-    tabModel->setData(tabModel->index(currow, 2), "0000-0000");
-
-    if (!tabModel->submitAll()) {
-        QMessageBox::information(this, "消息", "数据保存错误");
+    auto addRecord = std::make_unique<AddRecord>(this);
+    while (true) {
+        if (addRecord->exec() == QDialog::Rejected) {
+            return;
+        }
+        if (addRecord->getName().isEmpty()) {
+            QMessageBox::warning(this, "错误", "项目名称不能为空");
+            continue;
+        } else if (addRecord->getRID().isEmpty()) {
+            QMessageBox::warning(this, "错误", "监督注册号不能为空");
+            continue;
+        } else if (!addRecord->isMLFHSBChecked() && !addRecord->isZSTFFHSBChecked()) {
+            QMessageBox::warning(this, "错误", "抽查项目至少选择一项");
+            continue;
+        } else {  // 查重
+            QSqlQuery query(db_);
+            query.exec("SELECT * FROM CHOOSE WHERE RID='" + addRecord->getRID() + "'");
+            if (query.next()) {
+                QMessageBox::warning(this, "错误", "数据库中已有该监督注册号");
+                return;
+            }
+        }
+        tabModel->insertRow(tabModel->rowCount(), QModelIndex());                               //在末尾添加一个记录
+        theSelection->clearSelection();                                                         //清空选择项
+        tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 0), tabModel->rowCount());  //自动生成编号
+        tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 1), addRecord->getName());
+        tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 2), addRecord->getRID());
+        break;
     }
 }
 
 // 申请编辑
 void MainWindow::on_pushButton_3_clicked() {
     auto s = QInputDialog::getText(this, "使用提示", "请输入管理员密码", QLineEdit::Password);
-    if (s.length() == 0) {
+    if (s.isEmpty()) {
         return;
     } else if (s == "!g7M2613") {
         setTblEditable(true);
         return;
     }
     QSqlQuery query(db_);
-    query.exec("SELECT * FROM ADMIN");
-    while (query.next()) {
-        if (query.value("PASSWORD").toString() == s) {
-            setTblEditable(true);
-            return;
-        }
+    query.exec("SELECT * FROM ADMIN WHERE PASSWORD='" + s + "'");
+    if (query.next()) {
+        setTblEditable(true);
+        return;
     }
     QMessageBox::warning(this, "错误", "密码错误");
 }
 
-void MainWindow::setTblEditable(bool isEditable) {
-    if (isEditable) {
-        ui->tableView->setEditTriggers(QAbstractItemView::DoubleClicked);
-        ui->label->setText("可修改");
-    } else {
-        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        ui->label->setText("只读（不可编辑）");
+// 导出表格
+void MainWindow::on_pushButton_4_clicked() {
+    auto fileName = QFileDialog::getSaveFileName(this, "另存为", "", "csv文件(*.csv)");
+    if (fileName.isEmpty()) {
+        return;
     }
+    QFile file(fileName);
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&file);
+    out.setAutoDetectUnicode(true);
+    for (int i = 0; i < tabModel->rowCount(); i++) {
+        for (int j = 0; j < tabModel->columnCount(); j++) {
+            out << tabModel->data(tabModel->index(i, j)).toString();
+            out << ",";
+        }
+        out << endl;
+    }
+    file.close();
 }

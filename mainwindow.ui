@@ -65,14 +65,14 @@
        <item>
         <widget class="QPushButton" name="pushButton">
          <property name="text">
-          <string>PushButton</string>
+          <string>保存修改</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_2">
          <property name="text">
-          <string>增</string>
+          <string>新增项目</string>
          </property>
         </widget>
        </item>
@@ -80,6 +80,13 @@
         <widget class="QPushButton" name="pushButton_3">
          <property name="text">
           <string>申请编辑</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="text">
+          <string>导出表格</string>
          </property>
         </widget>
        </item>
