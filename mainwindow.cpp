@@ -1,8 +1,10 @@
 #include "mainwindow.h"
 
+#include <QDateTime>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QTime>
 
 #include "addrecord.h"
 #include "getadminpassword.h"
@@ -16,6 +18,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 MainWindow::~MainWindow() { delete ui; }
 
+int MainWindow::getRd() {
+    qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
+    return qrand();
+}
+
+void MainWindow::saveTbl() {
+    if (!tabModel->submitAll()) {
+        QMessageBox::warning(this, "错误", "保存失败，请检查数据格式");
+    }
+    tabModel->select();
+    ui->tableView->resizeColumnsToContents();  // 自动调整列宽
+}
+
 void MainWindow::checkAdminPassword() {
     auto tbl = std::make_unique<QSqlTableModel>(this, db_);
     tbl->setTable("ADMIN");
@@ -25,7 +40,6 @@ void MainWindow::checkAdminPassword() {
     auto getAdminPassword = std::make_unique<GetAdminPassword>(this);
     while (true) {
         if (getAdminPassword->exec() == QDialog::Rejected) {
-            close();
             break;
         } else if (!getAdminPassword->getPassword().isEmpty()) {
             QSqlQuery query(db_);
@@ -38,6 +52,7 @@ void MainWindow::checkAdminPassword() {
 }
 
 void MainWindow::setTblEditable(bool isEditable) {
+    ui->pushButton->setEnabled(isEditable);
     if (isEditable) {
         ui->tableView->setEditTriggers(QAbstractItemView::DoubleClicked);
         ui->label->setText("可修改");
@@ -57,19 +72,14 @@ void MainWindow::systemInit() {
     checkAdminPassword();
 
     tabModel = new QSqlTableModel(this, db_);
+    QSqlQuery query(db_);
+    query.exec("CREATE TABLE CHOOSE(DATETIME TEXT NOT NULL, NAME TEXT NOT NULL, RID TEXT UNIQUE NOT NULL, MLFHSB TEXT, ZSTFFHSB TEXT)");
     tabModel->setTable("CHOOSE");
-    if (!(tabModel->select()))  //查询数据
-    {
-        QMessageBox::information(this, "使用提示", "未查询到已有数据表，即将创建新数据表");
-        QSqlQuery query(db_);
-        query.exec("CREATE TABLE CHOOSE(ID INT PRIMARY KEY NOT NULL, NAME TEXT NOT NULL, RID TEXT UNIQUE NOT NULL, MLFHSB TEXT, ZSTFFHSB TEXT)");
-        tabModel->setTable("CHOOSE");
-    }
 
-    tabModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    //    tabModel->setSort(tabModel->fieldIndex("empNo"), Qt::AscendingOrder); // 排序
-
-    //字段显示名
+    tabModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    tabModel->setSort(tabModel->fieldIndex("DATETIME"), Qt::AscendingOrder);  // 排序
+    tabModel->select();
+    tabModel->setHeaderData(tabModel->fieldIndex("DATETIME"), Qt::Horizontal, "记录时间");
     tabModel->setHeaderData(tabModel->fieldIndex("NAME"), Qt::Horizontal, "项目名称");
     tabModel->setHeaderData(tabModel->fieldIndex("RID"), Qt::Horizontal, "监督注册号");
     tabModel->setHeaderData(tabModel->fieldIndex("MLFHSB"), Qt::Horizontal, "门类防护设备抽查项目");
@@ -77,52 +87,24 @@ void MainWindow::systemInit() {
 
     theSelection = new QItemSelectionModel(tabModel);  //关联选择模型
     // theSelection当前项变化时触发currentChanged信号
-    //    connect(theSelection, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentChanged(QModelIndex, QModelIndex)));
-    //    connect(theSelection, SIGNAL(currentRowChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentRowChanged(QModelIndex, QModelIndex)));
+    // connect(theSelection, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentChanged(QModelIndex, QModelIndex)));
+    // connect(theSelection, SIGNAL(currentRowChanged(QModelIndex, QModelIndex)), this, SLOT(on_currentRowChanged(QModelIndex, QModelIndex)));
 
     ui->tableView->setModel(tabModel);               // 设置数据模型
     ui->tableView->setSelectionModel(theSelection);  // 设置选择模型
     ui->tableView->resizeColumnsToContents();        // 自动调整列宽
+    // ui->tableView->setColumnHidden(tabModel->fieldIndex("ID"), true);  //隐藏列
 
-    //    ui->tableView->setColumnHidden(tabModel->fieldIndex("ID"), true);  //隐藏列
-
-    QStringList strList;
-    strList << "钢筋混凝土门"
-            << "钢结构门"
-            << "悬摆式防爆波活门";
-    comboDeligate1.setItems(strList);
-    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("MLFHSB"), &comboDeligate1);
-
-    strList.clear();
-    strList << "密闭阀门"
-            << "超压排气活门"
-            << "油网滤尘器"
-            << "过滤吸收器";
-    comboDeligate2.setItems(strList);
-    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("ZSTFFHSB"), &comboDeligate2);  // Combbox选择型
-
-    //    //创建界面组件与数据模型的字段之间的数据映射
-    //    dataMapper = new QDataWidgetMapper();
-    //    dataMapper->setModel(tabModel);                              //设置数据模型
-    //    dataMapper->setSubmitPolicy(QDataWidgetMapper::AutoSubmit);  //
-
-    //    //    dataMapper->setItemDelegate(new QSqlRelationalDelegate(this)); //含有外键的
-    //    //界面组件与tabModel的具体字段之间的联系
-    //    dataMapper->addMapping(ui->dbSpinEmpNo, tabModel->fieldIndex("empNo"));
-
-    //    //    dataMapper->addMapping(ui->dbPhoto,tabModel->fieldIndex("Photo")); //图片无法直接映射
-
-    //    dataMapper->toFirst();  //移动到首记录
-
-    //    //更新actions和界面组件的使能状态
-    //    ui->actOpenDB->setEnabled(false);
+    comboDeligate1_.setItems(MLFHSB_);
+    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("MLFHSB"), &comboDeligate1_);
+    comboDeligate2_.setItems(ZSTFFHSB_);
+    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("ZSTFFHSB"), &comboDeligate2_);
 }
 
-// 保存修改
+// 删除记录
 void MainWindow::on_pushButton_clicked() {
-    if (!tabModel->submitAll()) {
-        QMessageBox::warning(this, "错误", "保存失败，请检查数据格式");
-    }
+    tabModel->removeRow(theSelection->currentIndex().row());
+    saveTbl();
 }
 
 // 添加记录
@@ -149,12 +131,23 @@ void MainWindow::on_pushButton_2_clicked() {
                 return;
             }
         }
-        tabModel->insertRow(tabModel->rowCount(), QModelIndex());                               //在末尾添加一个记录
-        theSelection->clearSelection();                                                         //清空选择项
-        tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 0), tabModel->rowCount());  //自动生成编号
+        theSelection->clearSelection();                                                                                                 //清空选择项
+        tabModel->insertRow(tabModel->rowCount(), QModelIndex());                                                                       //在末尾添加一个记录
+        tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 0), QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));  //自动生成编号
         tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 1), addRecord->getName());
         tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 2), addRecord->getRID());
-        ui->tableView->resizeColumnsToContents();  // 自动调整列宽
+        if (addRecord->isMLFHSBChecked()) {
+            tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 3), MLFHSB_.at(getRd() % (MLFHSB_.size() - 1)));
+        } else {
+            tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 3), MLFHSB_.at(MLFHSB_.size() - 1));
+        }
+        if (addRecord->isZSTFFHSBChecked()) {
+            tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 4), ZSTFFHSB_.at(getRd() % (ZSTFFHSB_.size() - 1)));
+        } else {
+            tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 4), ZSTFFHSB_.at(ZSTFFHSB_.size() - 1));
+        }
+
+        saveTbl();
         break;
     }
 }

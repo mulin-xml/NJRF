@@ -7,17 +7,16 @@ namespace Ui {
 class GetAdminPassword;
 }
 
-class GetAdminPassword : public QDialog
-{
+class GetAdminPassword : public QDialog {
     Q_OBJECT
 
-public:
+   public:
     explicit GetAdminPassword(QWidget *parent = nullptr);
     ~GetAdminPassword();
     QString getPassword();
 
-private:
+   private:
     Ui::GetAdminPassword *ui;
 };
 
-#endif // GETADMINPASSWORD_H
+#endif  // GETADMINPASSWORD_H
