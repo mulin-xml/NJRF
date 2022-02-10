@@ -8,7 +8,7 @@
 #include "getadminpassword.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     setTblEditable(false);
     systemInit();
@@ -86,19 +86,20 @@ void MainWindow::systemInit() {
 
     //    ui->tableView->setColumnHidden(tabModel->fieldIndex("ID"), true);  //隐藏列
 
-    //    // tableView上为“性别”和“部门”两个字段设置自定义代理组件
-    //    QStringList strList;
-    //    strList << "男"
-    //            << "女";
-    //    bool isEditable = false;
-    //    delegateSex.setItems(strList, isEditable);
-    //    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("Gender"), &delegateSex);  // Combbox选择型
+    QStringList strList;
+    strList << "钢筋混凝土门"
+            << "钢结构门"
+            << "悬摆式防爆波活门";
+    comboDeligate1.setItems(strList);
+    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("MLFHSB"), &comboDeligate1);
 
-    //    strList.clear();
-    //        strList << "销售部"<< "技术部" << "生产部"  << "行政部";
-    //    isEditable = true;
-    //    delegateDepart.setItems(strList, isEditable);
-    //    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("Department"), &delegateDepart);  // Combbox选择型
+    strList.clear();
+    strList << "密闭阀门"
+            << "超压排气活门"
+            << "油网滤尘器"
+            << "过滤吸收器";
+    comboDeligate2.setItems(strList);
+    ui->tableView->setItemDelegateForColumn(tabModel->fieldIndex("ZSTFFHSB"), &comboDeligate2);  // Combbox选择型
 
     //    //创建界面组件与数据模型的字段之间的数据映射
     //    dataMapper = new QDataWidgetMapper();
@@ -115,14 +116,6 @@ void MainWindow::systemInit() {
 
     //    //更新actions和界面组件的使能状态
     //    ui->actOpenDB->setEnabled(false);
-
-    //    ui->actRecAppend->setEnabled(true);
-    //    ui->actRecInsert->setEnabled(true);
-    //    ui->actRecDelete->setEnabled(true);
-    //    ui->actScan->setEnabled(true);
-
-    //    ui->groupBoxSort->setEnabled(true);
-    //    ui->groupBoxFilter->setEnabled(true);
 }
 
 // 保存修改
@@ -161,6 +154,7 @@ void MainWindow::on_pushButton_2_clicked() {
         tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 0), tabModel->rowCount());  //自动生成编号
         tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 1), addRecord->getName());
         tabModel->setData(tabModel->index(tabModel->rowCount() - 1, 2), addRecord->getRID());
+        ui->tableView->resizeColumnsToContents();  // 自动调整列宽
         break;
     }
 }

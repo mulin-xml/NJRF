@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QtSql>
+#include "qwcomboboxdelegate.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -33,5 +34,7 @@ private:
     QSqlTableModel *tabModel;
     QItemSelectionModel *theSelection;
     QWidgetMapper *dataMapper;
+    QWComboBoxDelegate comboDeligate1;
+    QWComboBoxDelegate comboDeligate2;
 };
 #endif  // MAINWINDOW_H

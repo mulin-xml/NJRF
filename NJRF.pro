@@ -19,12 +19,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     addrecord.cpp \
     getadminpassword.cpp \
+    qwcomboboxdelegate.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     addrecord.h \
     getadminpassword.h \
+    qwcomboboxdelegate.h \
     mainwindow.h
 
 FORMS += \
